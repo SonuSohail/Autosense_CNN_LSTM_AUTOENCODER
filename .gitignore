@@ -1,0 +1,9 @@
+venv/
+*.db
+__pycache__/
+node_modules/
+*.zip
+*.exe
+*.pyd
+*.so
+*.dll
