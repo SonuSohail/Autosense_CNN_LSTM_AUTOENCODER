@@ -1,9 +1,38 @@
+# Virtual environments
 venv/
-*.db
+.env/
+
+# Python cache
 __pycache__/
-node_modules/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large datasets
+*.db
+*.csv
 *.zip
-*.exe
+*.tar
+*.tar.gz
+*.npz
+*.pth
+*.pt
+*.h5
+
+# Logs & misc
+*.log
+
+# DS/AI unwanted folders
+autosence/data/nuplan/
+autosence/venv/
+data/
+datasets/
+
+# Compiled binaries
+*.dll
 *.pyd
 *.so
-*.dll
+
+# Node junk (if any)
+node_modules/
