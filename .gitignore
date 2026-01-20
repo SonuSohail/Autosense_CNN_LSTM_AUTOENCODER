@@ -15,3 +15,32 @@ dist/
 
 # Logs
 *.log
+
+# Virtual environments
+venv/
+.env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large datasets
+*.db
+*.csv
+*.zip
+*.tar
+*.tar.gz
+*.npz
+*.pth
+*.pt
+*.h5
+
+# DS/AI unwanted folders
+autosence/data/nuplan/
+autosence/venv/
+data/
+datasets/
+
+# Compiled binaries
+*.dll
+*.pyd
+*.so
