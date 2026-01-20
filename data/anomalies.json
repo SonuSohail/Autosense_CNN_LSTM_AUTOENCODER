@@ -1,1 +1,21 @@
-[{"time": 3.0, "type": "Acceleration Spike"}, {"time": 4.0, "type": "Acceleration Spike"}, {"time": 5.0, "type": "Acceleration Spike"}]
+{
+  "anomalies": [
+    {
+      "time": 3.0,
+      "type": "Acceleration Spike"
+    },
+    {
+      "time": 4.0,
+      "type": "Acceleration Spike"
+    },
+    {
+      "time": 5.0,
+      "type": "Acceleration Spike"
+    }
+  ],
+  "count": 3,
+  "autoencoder": {
+    "disabled": true,
+    "reason": "too few rows for autoencoder (need >=30)"
+  }
+}
