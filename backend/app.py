@@ -165,7 +165,7 @@ def run_pipeline():
 
 
 # -----------------------------
-# SUMMARY (FOR DASHBOARD)
+# SUMMARY (FOR DASHBOARD - LATEST FRAME)
 # -----------------------------
 @app.route("/summary")
 def summary():
@@ -183,6 +183,79 @@ def summary():
         "last_updated": datetime.now().strftime("%d %b %Y, %H:%M:%S")
     }
     return jsonify(summary_payload)
+
+
+# -----------------------------
+# TRAJECTORY / TIME-SERIES FOR DASHBOARD
+# -----------------------------
+@app.route("/trajectory")
+def trajectory():
+    """
+    Ego vehicle 2D trajectory:
+    - latitude vs longitude
+    - includes time for tooltips.
+    """
+    df = read_csv_safe(FUSED_FILE)
+    if df is None:
+        return jsonify({"error": "fused output not found"}), 404
+
+    required = {"latitude", "longitude", "time"}
+    if not required.issubset(df.columns):
+        return jsonify({"error": "required columns missing", "required": sorted(required)}), 400
+
+    # Drop rows missing any of the required fields
+    sub = df[list(required)].dropna()
+    return jsonify({
+        "time": sub["time"].astype(float).tolist(),
+        "latitude": sub["latitude"].astype(float).tolist(),
+        "longitude": sub["longitude"].astype(float).tolist(),
+    })
+
+
+@app.route("/motion_profile")
+def motion_profile():
+    """
+    Motion profile using fused sensors:
+    - time
+    - GPS+IMU smoothed speed (speed_smooth)
+    - radar object velocity (object_velocity)
+    """
+    df = read_csv_safe(FUSED_FILE)
+    if df is None:
+        return jsonify({"error": "fused output not found"}), 404
+
+    required = {"time", "speed_smooth", "object_velocity"}
+    if not required.issubset(df.columns):
+        return jsonify({"error": "required columns missing", "required": sorted(required)}), 400
+
+    sub = df[list(required)].dropna()
+    return jsonify({
+        "time": sub["time"].astype(float).tolist(),
+        "speed_smooth": sub["speed_smooth"].astype(float).tolist(),
+        "object_velocity": sub["object_velocity"].astype(float).tolist(),
+    })
+
+
+@app.route("/confidence_series")
+def confidence_series():
+    """
+    Confidence of fusion over time:
+    - time
+    - confidence in [0, 1].
+    """
+    df = read_csv_safe(FUSED_FILE)
+    if df is None:
+        return jsonify({"error": "fused output not found"}), 404
+
+    required = {"time", "confidence"}
+    if not required.issubset(df.columns):
+        return jsonify({"error": "required columns missing", "required": sorted(required)}), 400
+
+    sub = df[list(required)].dropna()
+    return jsonify({
+        "time": sub["time"].astype(float).tolist(),
+        "confidence": sub["confidence"].astype(float).tolist(),
+    })
 
 
 # -----------------------------
@@ -422,6 +495,40 @@ def baseline_metrics():
         })
     else:
         return jsonify({"error": "required columns missing for baseline"}), 400
+
+
+# -----------------------------
+# SYSTEM SUMMARY (AGGREGATED)
+# -----------------------------
+@app.route("/system_summary")
+def system_summary():
+    """
+    Aggregated system-level KPIs for the dashboard:
+    - average speed_smooth
+    - average confidence
+    - total anomalies
+    - accuracy improvement (after - before).
+    """
+    fused = read_csv_safe(FUSED_FILE)
+    anomalies_data = load_json_safe(ANOMALIES_FILE, default={"anomalies": []})
+    metrics_data = load_json_safe(METRICS_FILE, default={})
+
+    avg_speed = float(fused["speed_smooth"].dropna().mean()) if (fused is not None and "speed_smooth" in fused.columns) else 0.0
+    avg_confidence = float(fused["confidence"].dropna().mean()) if (fused is not None and "confidence" in fused.columns) else 0.0
+    total_anomalies = len(anomalies_data.get("anomalies", []))
+    accuracy_improvement = None
+    try:
+        accuracy_improvement = float(metrics_data.get("delta", {}).get("accuracy"))
+    except (TypeError, ValueError):
+        accuracy_improvement = None
+
+    payload = {
+        "average_speed": round(avg_speed, 3),
+        "average_confidence": round(avg_confidence, 3),
+        "total_anomalies": int(total_anomalies),
+        "accuracy_improvement": round(accuracy_improvement, 3) if accuracy_improvement is not None else None,
+    }
+    return jsonify(payload)
 
 
 # -----------------------------

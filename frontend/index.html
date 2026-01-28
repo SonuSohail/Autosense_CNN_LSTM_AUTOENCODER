@@ -7,20 +7,21 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg: #0b1220;
-      --panel: #0f172a;
-      --card: #111827;
-      --accent: #3b82f6;
-      --accent-2: #22c55e;
-      --muted: #9ca3af;
-      --text: #e5e7eb;
+      --bg: #f3f4f6;
+      --panel: #ffffff;
+      --card: #ffffff;
+      --accent: #2563eb;
+      --accent-2: #16a34a;
+      --muted: #6b7280;
+      --text: #111827;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: "Inter", "Segoe UI", Arial, sans-serif;
-      background: radial-gradient(circle at 10% 10%, #111827, #0b1220 35%), #0b1220;
+      background: radial-gradient(circle at 10% 10%, #ffffff, #e5e7eb 40%), var(--bg);
       color: var(--text);
+      color-scheme: light;
     }
     header {
       padding: 28px 40px 18px;
@@ -37,8 +38,8 @@
     header .pill {
       padding: 10px 14px;
       border-radius: 999px;
-      background: rgba(59, 130, 246, 0.18);
-      color: #cbd5ff;
+      background: rgba(59, 130, 246, 0.12);
+      color: #1d4ed8;
       font-weight: 600;
       font-size: 13px;
     }
@@ -56,10 +57,10 @@
     }
     .card {
       background: var(--card);
-      border: 1px solid rgba(255,255,255,0.05);
+      border: 1px solid rgba(15,23,42,0.06);
       border-radius: 14px;
       padding: 16px 18px;
-      box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+      box-shadow: 0 16px 40px rgba(15,23,42,0.10);
     }
     .card h3 {
       margin: 0;
@@ -80,10 +81,10 @@
     .delta.negative { color: #ef4444; }
     .panel {
       background: var(--panel);
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid rgba(15,23,42,0.08);
       border-radius: 16px;
       padding: 18px;
-      box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+      box-shadow: 0 18px 40px rgba(15,23,42,0.10);
     }
     .panel h2 {
       margin: 0 0 12px;
@@ -111,16 +112,17 @@
       box-shadow: 0 10px 25px rgba(34, 197, 94, 0.35);
     }
     .btn.ghost {
-      background: rgba(255,255,255,0.06);
+      background: #ffffff;
+      color: #1f2933;
       box-shadow: none;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid #d1d5db;
     }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn:hover:not(:disabled) { transform: translateY(-2px); }
     select, input[type="checkbox"] {
-      background: rgba(255,255,255,0.06);
+      background: #f9fafb;
       color: var(--text);
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid #d1d5db;
       padding: 10px 12px;
       border-radius: 10px;
     }
@@ -132,7 +134,7 @@
     th, td {
       padding: 12px 10px;
       text-align: center;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(15,23,42,0.06);
       font-size: 14px;
     }
     th { color: var(--muted); font-weight: 600; }
@@ -154,9 +156,9 @@
     .img-card {
       background: var(--card);
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid rgba(15,23,42,0.06);
       overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+      box-shadow: 0 10px 28px rgba(15,23,42,0.12);
     }
     .img-card img {
       width: 100%;
@@ -213,6 +215,27 @@
       <div id="runStatus" class="status" style="margin-top:10px;"></div>
     </div>
 
+    <!-- OUTPUT 6: System Summary (aggregated KPIs) -->
+    <div class="cards">
+      <div class="card">
+        <h3>Avg Speed</h3>
+        <div class="value" id="avgSpeed">--</div>
+      </div>
+      <div class="card">
+        <h3>Avg Confidence</h3>
+        <div class="value" id="avgConfidence">--</div>
+      </div>
+      <div class="card">
+        <h3>Total Anomalies</h3>
+        <div class="value" id="totalAnomalies">--</div>
+      </div>
+      <div class="card">
+        <h3>Accuracy Δ</h3>
+        <div class="value" id="accuracyImprovement">--</div>
+      </div>
+    </div>
+
+    <!-- Current frame snapshot (from /summary) -->
     <div class="cards">
       <div class="card">
         <h3>Speed</h3>
@@ -286,6 +309,49 @@
       </div>
     </div>
 
+    <!-- OUTPUT 1 & 2: Trajectory + Motion Profile -->
+    <div class="grid" style="grid-template-columns: 1.2fr 0.8fr;">
+      <div class="panel">
+        <div class="flex" style="justify-content: space-between; align-items:center;">
+          <h2>Ego Vehicle Trajectory</h2>
+          <div class="delta">Latitude vs Longitude</div>
+        </div>
+        <canvas id="trajectoryChart" height="160"></canvas>
+      </div>
+      <div class="panel">
+        <div class="flex" style="justify-content: space-between; align-items:center;">
+          <h2>Motion Profile (Fusion)</h2>
+          <div class="delta">Speed vs Radar velocity</div>
+        </div>
+        <canvas id="motionChart" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- OUTPUT 3 & 5: Confidence over time + Sensor health -->
+    <div class="grid" style="grid-template-columns: 1.2fr 0.8fr;">
+      <div class="panel">
+        <div class="flex" style="justify-content: space-between; align-items:center;">
+          <h2>Fusion Confidence Over Time</h2>
+          <div class="delta">0–1 confidence</div>
+        </div>
+        <canvas id="confidenceChart" height="140"></canvas>
+      </div>
+      <div class="panel">
+        <div class="flex" style="justify-content: space-between; align-items:center;">
+          <h2>Sensor Health (Anomalies)</h2>
+          <div class="delta" id="sensorStatus">--</div>
+        </div>
+        <div class="flex" style="justify-content: space-between; align-items:center; margin-top:6px;">
+          <div class="delta" id="anomalyMeta">--</div>
+          <div class="delta" id="anomalyCountHeader"></div>
+        </div>
+        <table id="anomalyTable" style="margin-top:6px;">
+          <tr><th>Time</th><th>Type</th><th>Score</th></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Existing deep-dive panels (LSTM, health forecast, images, metadata, latency) -->
     <div class="grid" style="grid-template-columns: 1.2fr 0.8fr;">
       <div class="panel">
         <div class="flex" style="justify-content: space-between; align-items:center;">
@@ -321,16 +387,6 @@
     </div>
 
     <div class="panel">
-      <div class="flex" style="justify-content: space-between; align-items:center;">
-        <h2>Anomalies</h2>
-        <div class="delta" id="anomalyMeta">--</div>
-      </div>
-      <table id="anomalyTable">
-        <tr><th>Time</th><th>Type</th><th>Score</th></tr>
-      </table>
-    </div>
-
-    <div class="panel">
       <h2>Dataset Metadata & Architecture</h2>
       <div id="datasetPanel" style="margin-top:10px;">
         <div class="delta">Loading dataset info...</div>
@@ -356,9 +412,9 @@
     let accuracyChart;
     let weightsChart;
     let lstmChart;
-    let historyLabels = [];
-    let historyBefore = [];
-    let historyAfter = [];
+  let trajectoryChart;
+  let motionChart;
+  let confidenceChart;
 
     function animate(el, val, unit = "") {
       let start = 0;
@@ -405,7 +461,11 @@
           status.innerText = `Pipeline completed (${data.model})`;
           status.style.color = "#34d399";
           await loadSummary();
+          await loadSystemSummary();
           await loadMetrics();
+          await loadTrajectory();
+          await loadMotionProfile();
+          await loadConfidenceSeries();
           await loadAnomalies();
           await loadImages();
           await loadWeights();
@@ -448,6 +508,22 @@
       }
     }
 
+    async function loadSystemSummary() {
+      try {
+        const res = await fetch(API + "/system_summary");
+        const d = await res.json();
+        if (d.error) return;
+        animate(document.getElementById("avgSpeed"), d.average_speed, " km/h");
+        animate(document.getElementById("avgConfidence"), (d.average_confidence || 0) * 100, " %");
+        document.getElementById("totalAnomalies").innerText = d.total_anomalies ?? "--";
+        const accImp = d.accuracy_improvement;
+        document.getElementById("accuracyImprovement").innerText =
+          accImp == null ? "--" : `${accImp >= 0 ? "+" : ""}${accImp.toFixed(3)}`;
+      } catch (e) {
+        console.warn("system summary load failed", e);
+      }
+    }
+
     async function loadMetrics() {
       try {
         const model = document.getElementById("modelSelect").value;
@@ -468,17 +544,10 @@
         document.getElementById("recDelta").innerText = delta.recall ?? "--";
         document.getElementById("deltaAccuracy").innerText = `Δ Accuracy: ${delta.accuracy ?? "--"}`;
 
-        // chart history (append latest)
-        const label = new Date(d.timestamp || Date.now()).toLocaleTimeString();
-        historyLabels.push(label);
-        historyBefore.push(before.accuracy ?? 0);
-        historyAfter.push(after.accuracy ?? 0);
-        if (historyLabels.length > 12) {
-          historyLabels.shift();
-          historyBefore.shift();
-          historyAfter.shift();
-        }
-        renderChart();
+        // OUTPUT 4: bar chart Accuracy Before vs After
+        const beforeAcc = before.accuracy ?? 0;
+        const afterAcc = after.accuracy ?? 0;
+        renderAccuracyChart(beforeAcc, afterAcc);
       } catch (e) {
         console.warn('metrics load failed', e);
         // Fallback sample data
@@ -492,6 +561,7 @@
         document.getElementById("precDelta").innerText = "+0.07";
         document.getElementById("recDelta").innerText = "+0.03";
         document.getElementById("deltaAccuracy").innerText = "Δ Accuracy: +0.07";
+        renderAccuracyChart(0.85, 0.92);
       }
     }
 
@@ -500,21 +570,37 @@
         const res = await fetch(API + "/anomalies");
         const d = await res.json();
         const list = d.anomalies || [];
-        document.getElementById("anomalyCount").innerText = `Anomalies: ${d.count ?? list.length}`;
+        const count = d.count ?? list.length;
+        document.getElementById("anomalyCount").innerText = `Anomalies: ${count}`;
         document.getElementById("anomalyMeta").innerText = `Autoencoder threshold: ${d.autoencoder?.threshold ?? "--"}`;
+        document.getElementById("anomalyCountHeader").innerText = `Total: ${count}`;
 
         const table = document.getElementById("anomalyTable");
         table.innerHTML = "<tr><th>Time</th><th>Type</th><th>Score</th></tr>";
-        list.slice(0, 20).forEach(item => {
+        let maxScore = 0;
+        list.slice(0, 50).forEach(item => {
+          const score = item.score || 0;
+          if (score > maxScore) maxScore = score;
           const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${item.time?.toFixed ? item.time.toFixed(2) : item.time}</td><td>${item.type}</td><td>${item.score ? item.score.toFixed(3) : "--"}</td>`;
+          tr.innerHTML = `<td>${item.time?.toFixed ? item.time.toFixed(2) : item.time}</td><td>${item.type}</td><td>${score ? score.toFixed(3) : "--"}</td>`;
           table.appendChild(tr);
         });
+
+        // Simple health classification
+        let status = "Healthy";
+        if (count > 10 || maxScore > 1.5) {
+          status = "Faulty";
+        } else if (count > 3 || maxScore > 1.0) {
+          status = "Degraded";
+        }
+        document.getElementById("sensorStatus").innerText = status;
       } catch (e) {
         console.warn('anomalies load failed', e);
         // Fallback sample data
         document.getElementById("anomalyCount").innerText = "Anomalies: 3";
         document.getElementById("anomalyMeta").innerText = "Autoencoder threshold: 0.85";
+        document.getElementById("anomalyCountHeader").innerText = "Total: 3";
+        document.getElementById("sensorStatus").innerText = "Degraded";
         const table = document.getElementById("anomalyTable");
         table.innerHTML = "<tr><th>Time</th><th>Type</th><th>Score</th></tr>";
         const sampleAnomalies = [
@@ -569,31 +655,160 @@
       }
     }
 
-    function renderChart() {
+    function renderAccuracyChart(beforeAcc, afterAcc) {
       const ctx = document.getElementById("accuracyChart");
+      const labels = ["Before", "After"];
+      const data = [beforeAcc, afterAcc];
       if (!accuracyChart) {
         accuracyChart = new Chart(ctx, {
-          type: "line",
+          type: "bar",
           data: {
-            labels: historyLabels,
-            datasets: [
-              { label: "Before", data: historyBefore, borderColor: "#f87171", tension: 0.35 },
-              { label: "After", data: historyAfter, borderColor: "#22c55e", tension: 0.35 }
-            ]
+            labels,
+            datasets: [{
+              label: "Accuracy",
+              data,
+              backgroundColor: ["#f97316", "#22c55e"]
+            }]
           },
           options: {
-            plugins: { legend: { labels: { color: "#cbd5e1" } } },
+            plugins: { legend: { labels: { color: "#4b5563" } } },
             scales: {
-              x: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(255,255,255,0.05)" } },
-              y: { min: 0, max: 1, ticks: { color: "#9ca3af" }, grid: { color: "rgba(255,255,255,0.05)" } }
+              x: { ticks: { color: "#4b5563" }, grid: { color: "rgba(15,23,42,0.06)" } },
+              y: { min: 0, max: 1, ticks: { color: "#4b5563" }, grid: { color: "rgba(15,23,42,0.06)" } }
             }
           }
         });
       } else {
-        accuracyChart.data.labels = historyLabels;
-        accuracyChart.data.datasets[0].data = historyBefore;
-        accuracyChart.data.datasets[1].data = historyAfter;
+        accuracyChart.data.labels = labels;
+        accuracyChart.data.datasets[0].data = data;
         accuracyChart.update();
+      }
+    }
+
+    async function loadTrajectory() {
+      try {
+        const res = await fetch(API + "/trajectory");
+        const d = await res.json();
+        if (d.error) return;
+        const points = (d.latitude || []).map((lat, i) => ({
+          x: d.longitude[i],
+          y: lat,
+          t: d.time[i]
+        }));
+        const ctx = document.getElementById("trajectoryChart");
+        if (!trajectoryChart) {
+          trajectoryChart = new Chart(ctx, {
+            type: "scatter",
+            data: {
+              datasets: [{
+                label: "Trajectory",
+                data: points,
+                showLine: true,
+                borderColor: "#3b82f6",
+                backgroundColor: "rgba(59,130,246,0.4)",
+                pointRadius: 1.5
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { labels: { color: "#4b5563" } },
+                tooltip: {
+                  callbacks: {
+                    label: ctx => {
+                      const v = ctx.raw;
+                      return `time=${v.t.toFixed ? v.t.toFixed(2) : v.t}, lat=${v.y.toFixed(6)}, lon=${v.x.toFixed(6)}`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: { title: { display: true, text: "Longitude", color: "#4b5563" }, ticks: { color: "#4b5563" }, grid: { color: "rgba(15,23,42,0.06)" } },
+                y: { title: { display: true, text: "Latitude", color: "#4b5563" }, ticks: { color: "#4b5563" }, grid: { color: "rgba(15,23,42,0.06)" } }
+              }
+            }
+          });
+        } else {
+          trajectoryChart.data.datasets[0].data = points;
+          trajectoryChart.update();
+        }
+      } catch (e) {
+        console.warn("trajectory load failed", e);
+      }
+    }
+
+    async function loadMotionProfile() {
+      try {
+        const res = await fetch(API + "/motion_profile");
+        const d = await res.json();
+        if (d.error) return;
+        const labels = d.time || [];
+        const speed = d.speed_smooth || [];
+        const radar = d.object_velocity || [];
+        const ctx = document.getElementById("motionChart");
+        if (!motionChart) {
+          motionChart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                { label: "Speed (GPS+IMU)", data: speed, borderColor: "#22c55e", tension: 0.3 },
+                { label: "Radar velocity", data: radar, borderColor: "#f97316", tension: 0.3 }
+              ]
+            },
+            options: {
+              plugins: { legend: { labels: { color: "#4b5563" } } },
+              scales: {
+                x: { title: { display: true, text: "Time", color: "#4b5563" }, ticks: { color: "#4b5563" }, grid: { color: "rgba(15,23,42,0.06)" } },
+                y: { title: { display: true, text: "Velocity", color: "#4b5563" }, ticks: { color: "#4b5563" }, grid: { color: "rgba(15,23,42,0.06)" } }
+              }
+            }
+          });
+        } else {
+          motionChart.data.labels = labels;
+          motionChart.data.datasets[0].data = speed;
+          motionChart.data.datasets[1].data = radar;
+          motionChart.update();
+        }
+      } catch (e) {
+        console.warn("motion profile load failed", e);
+      }
+    }
+
+    async function loadConfidenceSeries() {
+      try {
+        const res = await fetch(API + "/confidence_series");
+        const d = await res.json();
+        if (d.error) return;
+        const labels = d.time || [];
+        const conf = d.confidence || [];
+        const ctx = document.getElementById("confidenceChart");
+        if (!confidenceChart) {
+          confidenceChart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [{
+                label: "Confidence",
+                data: conf,
+                borderColor: "#a855f7",
+                tension: 0.3
+              }]
+            },
+            options: {
+              plugins: { legend: { labels: { color: "#4b5563" } } },
+              scales: {
+                x: { title: { display: true, text: "Time", color: "#4b5563" }, ticks: { color: "#4b5563" }, grid: { color: "rgba(15,23,42,0.06)" } },
+                y: { min: 0, max: 1, title: { display: true, text: "Confidence (0–1)", color: "#4b5563" }, ticks: { color: "#4b5563" }, grid: { color: "rgba(15,23,42,0.06)" } }
+              }
+            }
+          });
+        } else {
+          confidenceChart.data.labels = labels;
+          confidenceChart.data.datasets[0].data = conf;
+          confidenceChart.update();
+        }
+      } catch (e) {
+        console.warn("confidence series load failed", e);
       }
     }
 
@@ -615,7 +830,7 @@
         weightsChart = new Chart(ctx, {
           type: 'pie',
           data: { labels, datasets: [{ data, backgroundColor: ['#60a5fa','#34d399','#f97316','#c084fc','#fca5a5','#f59e0b'] }] },
-          options: { plugins: { legend: { labels: { color: '#cbd5e1' } } } }
+          options: { plugins: { legend: { labels: { color: '#4b5563' } } } }
         });
       } else {
         weightsChart.data.datasets[0].data = data;
@@ -699,7 +914,7 @@
             { label: 'Speed', data: d.speed || [], borderColor: '#60a5fa' },
             { label: 'Predicted', data: d.predicted || [], borderColor: '#f59e0b' }
           ] },
-          options: { plugins: { legend: { labels: { color: '#cbd5e1' } } }, scales: { x: { ticks: { color: '#9ca3af' } }, y: { ticks: { color: '#9ca3af' } } } }
+          options: { plugins: { legend: { labels: { color: '#4b5563' } } }, scales: { x: { ticks: { color: '#4b5563' } }, y: { ticks: { color: '#4b5563' } } } }
         });
       } else {
         lstmChart.data.labels = d.time || [];
@@ -822,7 +1037,11 @@
     // initial load
     console.log('Script loaded, starting initial load');
     loadSummary();
+    loadSystemSummary();
     loadMetrics();
+    loadTrajectory();
+    loadMotionProfile();
+    loadConfidenceSeries();
     loadAnomalies();
     loadImages();
     loadWeights();
@@ -836,3 +1055,4 @@
   </script>
 </body>
 </html>
+hi
